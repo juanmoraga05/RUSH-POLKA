@@ -8,7 +8,6 @@ import string
 import pandas as pd
 from websocket import create_connection
 import requests
-import json
 
 logger = logging.getLogger(__name__)
 
