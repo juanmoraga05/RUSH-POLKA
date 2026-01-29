@@ -29,10 +29,10 @@ class Interval(enum.Enum):
 
 
 class TradingViewData:
-    __sign_in_url = 'https://www.tradingview.com/accounts/signin/'
-    __search_url = 'https://symbol-search.tradingview.com/symbol_search/?text={}&hl=1&exchange={}&lang=en&type=&domain=production'
+    __sign_in_url = "https://www.tradingview.com/accounts/signin/"
+    __search_url = "https://symbol-search.tradingview.com/symbol_search/?text={}&hl=1&exchange={}&lang=en&type=&domain=production"
     __ws_headers = json.dumps({"Origin": "https://data.tradingview.com"})
-    __signin_headers = {'Referer': 'https://www.tradingview.com'}
+    __signin_headers = {"Referer": "https://www.tradingview.com"}
     __ws_timeout = 5
 
     def __init__(
@@ -40,7 +40,6 @@ class TradingViewData:
         username: str = None,
         password: str = None,
     ) -> None:
-
         self.ws_debug = False
 
         self.token = self.__auth(username, password)
@@ -48,26 +47,23 @@ class TradingViewData:
         if self.token is None:
             self.token = "unauthorized_user_token"
 
-
         self.ws = None
         self.session = self.__generate_session()
         self.chart_session = self.__generate_chart_session()
 
     def __auth(self, username, password):
-
-        if (username is None or password is None):
+        if username is None or password is None:
             token = None
 
         else:
-            data = {"username": username,
-                    "password": password,
-                    "remember": "on"}
+            data = {"username": username, "password": password, "remember": "on"}
             try:
                 response = requests.post(
-                    url=self.__sign_in_url, data=data, headers=self.__signin_headers)
-                token = response.json()['user']['auth_token']
+                    url=self.__sign_in_url, data=data, headers=self.__signin_headers
+                )
+                token = response.json()["user"]["auth_token"]
             except Exception as e:
-                logger.error('error while signin')
+                logger.error("error while signin")
                 token = None
 
         return token
@@ -75,7 +71,9 @@ class TradingViewData:
     def __create_connection(self):
         logging.debug("creating websocket connection")
         self.ws = create_connection(
-            "wss://data.tradingview.com/socket.io/websocket", headers=self.__ws_headers, timeout=self.__ws_timeout
+            "wss://data.tradingview.com/socket.io/websocket",
+            headers=self.__ws_headers,
+            timeout=self.__ws_timeout,
         )
 
     @staticmethod
@@ -92,16 +90,14 @@ class TradingViewData:
     def __generate_session():
         stringLength = 12
         letters = string.ascii_lowercase
-        random_string = "".join(random.choice(letters)
-                                for i in range(stringLength))
+        random_string = "".join(random.choice(letters) for i in range(stringLength))
         return "qs_" + random_string
 
     @staticmethod
     def __generate_chart_session():
         stringLength = 12
         letters = string.ascii_lowercase
-        random_string = "".join(random.choice(letters)
-                                for i in range(stringLength))
+        random_string = "".join(random.choice(letters) for i in range(stringLength))
         return "cs_" + random_string
 
     @staticmethod
@@ -124,19 +120,18 @@ class TradingViewData:
     @staticmethod
     def __create_df(raw_data, symbol):
         try:
-            out = re.search('"s":\[(.+?)\}\]', raw_data).group(1)
+            out = re.search(r'"s":\[(.+?)\}\]', raw_data).group(1)
             x = out.split(',{"')
             data = list()
             volume_data = True
 
             for xi in x:
-                xi = re.split("\[|:|,|\]", xi)
+                xi = re.split(r"\[|:|,|\]", xi)
                 ts = datetime.datetime.fromtimestamp(float(xi[4]))
 
                 row = [ts]
 
                 for i in range(5, 10):
-
                     # skip converting volume data if does not exists
                     if not volume_data and i == 9:
                         row.append(0.0)
@@ -147,13 +142,12 @@ class TradingViewData:
                     except ValueError:
                         volume_data = False
                         row.append(0.0)
-                        logger.debug('no volume data')
+                        logger.debug("no volume data")
 
                 data.append(row)
 
             data = pd.DataFrame(
-                data, columns=["datetime", "open",
-                               "high", "low", "close", "volume"]
+                data, columns=["datetime", "open", "high", "low", "close", "volume"]
             ).set_index("datetime")
             data.insert(0, "symbol", value=symbol)
             return data
@@ -162,7 +156,6 @@ class TradingViewData:
 
     @staticmethod
     def __format_symbol(symbol, exchange, contract: int = None):
-
         if ":" in symbol:
             pass
         elif contract is None:
@@ -227,8 +220,7 @@ class TradingViewData:
         )
 
         self.__send_message(
-            "quote_add_symbols", [self.session, symbol,
-                                  {"flags": ["force_permission"]}]
+            "quote_add_symbols", [self.session, symbol, {"flags": ["force_permission"]}]
         )
         self.__send_message("quote_fast_symbols", [self.session, symbol])
 
@@ -248,8 +240,7 @@ class TradingViewData:
             "create_series",
             [self.chart_session, "s1", "s1", "symbol_1", interval, n_bars],
         )
-        self.__send_message("switch_timezone", [
-                            self.chart_session, "exchange"])
+        self.__send_message("switch_timezone", [self.chart_session, "exchange"])
 
         raw_data = ""
 
@@ -267,15 +258,16 @@ class TradingViewData:
 
         return self.__create_df(raw_data, symbol)
 
-    def search(self, text: str, exchange: str = ''):
+    def search(self, text: str, exchange: str = ""):
         url = self.__search_url.format(text, exchange)
 
         symbols_list = []
         try:
             resp = requests.get(url)
 
-            symbols_list = json.loads(resp.text.replace(
-                '</em>', '').replace('<em>', ''))
+            symbols_list = json.loads(
+                resp.text.replace("</em>", "").replace("<em>", "")
+            )
         except Exception as e:
             logger.error(e)
 

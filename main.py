@@ -15,13 +15,13 @@ BUCKET_NAME = "polkadot-rush-imat"
 
 # Datos cripto
 EXCHANGE = "binance"
-SYMBOL = "DOTUSD"          # Polkadot
-INTERVAL = "1D"            # Diario (TradingView)
+SYMBOL = "DOTUSD"  # Polkadot
+INTERVAL = "1D"  # Diario (TradingView)
 SOURCE = "tradingview"
 
 # Rango temporal
 START_YEAR = 2022
-END_YEAR = 2025            # inclusive
+END_YEAR = 2025  # inclusive
 
 # Raíz lógica en S3
 BASE_PREFIX = "raw"
@@ -95,8 +95,16 @@ def write_csv(df: pd.DataFrame, year: int, month: int) -> str:
     df["source"] = SOURCE
 
     cols = [
-        "timestamp", "open", "high", "low", "close", "volume",
-        "symbol", "exchange", "interval", "source"
+        "datetime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "symbol",
+        "exchange",
+        "interval",
+        "source",
     ]
     df = df[cols]
 
@@ -123,16 +131,23 @@ def main():
     ensure_bucket_exists(s3, BUCKET_NAME, AWS_REGION)
 
     tv = TradingViewData()  # Inicialización para evitar retrasos en el bucle
-    polka_data = tv.get_hist(symbol=SYMBOL,exchange=EXCHANGE,interval=Interval.daily,n_bars=1460)
+    polka_data = tv.get_hist(
+        symbol=SYMBOL, exchange=EXCHANGE, interval=Interval.daily, n_bars=1460
+    )
 
-    polka_data["year"] = polka_data["timestamp"].dt.year
-    polka_data["month"] = polka_data["timestamp"].dt.month
+    # Reset index to make 'datetime' a column, so it is preserved in CSV
+    polka_data.reset_index(inplace=True)
+
+    polka_data["year"] = polka_data["datetime"].dt.year
+    polka_data["month"] = polka_data["datetime"].dt.month
 
     for year in range(START_YEAR, END_YEAR + 1):
         for month in range(1, 13):
             print(f"\nProcesando {year}-{month:02d}")
 
-            df = polka_data[(polka_data["year"] == year) & (polka_data["month"] == month)].copy()
+            df = polka_data[
+                (polka_data["year"] == year) & (polka_data["month"] == month)
+            ].copy()
             if df.empty:
                 print("[INFO] No hay datos para este mes.")
                 continue
@@ -141,7 +156,7 @@ def main():
             if "volume" not in df.columns:
                 df["volume"] = pd.NA
 
-            df = df[["timestamp", "open", "high", "low", "close", "volume"]]
+            df = df[["datetime", "open", "high", "low", "close", "volume"]]
 
             local_csv = write_csv(df, year, month)
             if not local_csv:
