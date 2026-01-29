@@ -103,4 +103,5 @@ Settings are managed in `config.py`.
 ## License
 
 University Project - (3rd Year) Big Data Processing.
+
 Proyecto Universitario - (3er Año) Tecnologías de Procesamiento Big Data 
