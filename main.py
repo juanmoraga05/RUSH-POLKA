@@ -69,10 +69,6 @@ def upload_file_to_s3(s3_client, bucket: str, local_path: str, s3_key: str) -> N
 # ==================================================
 def build_s3_prefix(year: int, month: int) -> str:
     return (
-        f"{BASE_PREFIX}/"
-        f"exchange={EXCHANGE}/"
-        f"symbol={SYMBOL}/"
-        f"interval={INTERVAL}/"
         f"year={year}/"
         f"month={month:02d}/"
     )
