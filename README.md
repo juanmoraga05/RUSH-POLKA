@@ -104,4 +104,4 @@ Settings are managed in `config.py`.
 
 University Project - (3rd Year) Big Data Processing.
 
-Proyecto Universitario - (3er Año) Tecnologías de Procesamiento Big Data 
+Proyecto Universitario - (3er Año) Tecnologías de Procesamiento Big Data
