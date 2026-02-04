@@ -28,6 +28,13 @@ RUSH-POLKA/
 └── README.md           # Project documentation
 ```
 
+```text
+polkadot-rush-imat/
+├── year=X/   
+|  ├── month=X/       
+|     ├── DOTUSD_binance_X.csv      
+```
+
 ## Prerequisites
 
 - **Python 3.8+**
