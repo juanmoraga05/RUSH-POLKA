@@ -18,8 +18,5 @@ SOURCE = "tradingview"
 START_YEAR = 2022
 END_YEAR = 2025  # inclusive
 
-# Raíz lógica en S3
-BASE_PREFIX = "raw"
-
 # Carpeta local temporal
 LOCAL_BASE_DIR = "data"
