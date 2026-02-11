@@ -1,0 +1,106 @@
+"""
+Despliega y ejecuta el Glue Job Bronze → Silver.
+1. Sube el script PySpark a S3
+2. Crea (o actualiza) el Glue Job
+3. Lo ejecuta y espera a que termine
+"""
+
+import time
+import boto3
+from config import AWS_REGION, BUCKET_NAME
+
+# ==================================================
+# CONFIGURACIÓN
+# ==================================================
+ROLE_ARN = "arn:aws:iam::490004641586:role/Sprint2a04"
+JOB_NAME = "dot_bronze_to_silver"
+SCRIPT_LOCAL = "glue_bronze_to_silver.py"
+SCRIPT_S3_KEY = "scripts/glue_bronze_to_silver.py"
+SCRIPT_S3_PATH = f"s3://{BUCKET_NAME}/{SCRIPT_S3_KEY}"
+
+glue = boto3.client("glue", region_name=AWS_REGION)
+s3 = boto3.client("s3", region_name=AWS_REGION)
+
+
+# ==================================================
+# 1. SUBIR SCRIPT A S3
+# ==================================================
+def upload_script():
+    s3.upload_file(SCRIPT_LOCAL, BUCKET_NAME, SCRIPT_S3_KEY)
+    print(f"[OK] Script subido a {SCRIPT_S3_PATH}")
+
+
+# ==================================================
+# 2. CREAR O ACTUALIZAR GLUE JOB
+# ==================================================
+def create_or_update_job():
+    job_config = dict(
+        Name=JOB_NAME,
+        Role=ROLE_ARN,
+        Command={
+            "Name": "glueetl",
+            "ScriptLocation": SCRIPT_S3_PATH,
+            "PythonVersion": "3",
+        },
+        DefaultArguments={
+            "--job-language": "python",
+            "--TempDir": f"s3://{BUCKET_NAME}/tmp/",
+        },
+        GlueVersion="4.0",
+        WorkerType="G.1X",
+        NumberOfWorkers=2,
+        Timeout=30,  # minutos
+        Description="Bronze → Silver: CSV a Parquet con limpieza de datos",
+    )
+
+    try:
+        glue.get_job(JobName=JOB_NAME)
+        # Ya existe → actualizar
+        glue.update_job(
+            JobName=JOB_NAME,
+            JobUpdate={k: v for k, v in job_config.items() if k != "Name"},
+        )
+        print(f"[OK] Job '{JOB_NAME}' actualizado.")
+    except glue.exceptions.EntityNotFoundException:
+        glue.create_job(**job_config)
+        print(f"[OK] Job '{JOB_NAME}' creado.")
+
+
+# ==================================================
+# 3. EJECUTAR Y ESPERAR
+# ==================================================
+def run_job():
+    response = glue.start_job_run(JobName=JOB_NAME)
+    run_id = response["JobRunId"]
+    print(f"[OK] Job iniciado (RunId: {run_id})")
+    print("[WAIT] Esperando a que finalice...")
+
+    while True:
+        time.sleep(15)
+        status = glue.get_job_run(JobName=JOB_NAME, RunId=run_id)["JobRun"]
+        state = status["JobRunState"]
+
+        if state in ("SUCCEEDED",):
+            print("[OK] Job completado con éxito.")
+            break
+        elif state in ("FAILED", "TIMEOUT", "ERROR", "STOPPED"):
+            error = status.get("ErrorMessage", "Sin mensaje de error")
+            print(f"[ERROR] Job falló: {state} — {error}")
+            break
+        else:
+            print(f"  Estado: {state}...")
+
+
+# ==================================================
+# MAIN
+# ==================================================
+def main():
+    print(f"=== Deploy Glue Job: Bronze → Silver ===\n")
+    upload_script()
+    create_or_update_job()
+    run_job()
+    print("\n=== Proceso completado ===")
+
+
+if __name__ == "__main__":
+    main()
