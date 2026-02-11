@@ -1,20 +1,27 @@
 """
 Despliega y ejecuta el Glue Job Silver → Gold.
-1. Sube el script PySpark a S3
-2. Crea (o actualiza) el Glue Job
-3. Lo ejecuta y espera a que termine
+1. Ejecuta el Crawler para indexar Silver en el Data Catalog
+2. Sube el script PySpark a S3
+3. Crea (o actualiza) el Glue Job
+4. Lo ejecuta y espera a que termine
 """
 
 import os
 import time
 import boto3
-from config import AWS_REGION, BUCKET_NAME
+from config import AWS_REGION, BUCKET_NAME, DATABASE_NAME, CRAWLER_NAME, ROLE_ARN
+from crawler import (
+    create_database,
+    delete_crawler_if_exists,
+    create_crawler,
+    run_crawler,
+    list_tables,
+)
 
 # ==================================================
 # CONFIGURACIÓN
 # ==================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROLE_ARN = "arn:aws:iam::490004641586:role/Sprint2a04"
 JOB_NAME = "dot_silver_to_gold"
 SCRIPT_LOCAL = os.path.join(BASE_DIR, "glue_silver_to_gold.py")
 SCRIPT_S3_KEY = "scripts/glue_silver_to_gold.py"
@@ -98,6 +105,17 @@ def run_job():
 # ==================================================
 def main():
     print("=== Deploy Glue Job: Silver → Gold ===\n")
+
+    # Paso 1: Crawler para indexar Silver en el Data Catalog
+    print("--- Paso 1: Ejecutar Crawler (indexar Silver) ---")
+    create_database()
+    delete_crawler_if_exists()
+    create_crawler()
+    run_crawler()
+    list_tables()
+
+    # Paso 2: Deploy y ejecución del Job
+    print("\n--- Paso 2: Deploy y ejecución del Job ---")
     upload_script()
     create_or_update_job()
     run_job()

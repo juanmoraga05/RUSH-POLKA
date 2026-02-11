@@ -32,3 +32,16 @@ GOLD_LOCAL_DIR = os.path.join(LOCAL_BASE_DIR, "gold")
 BRONZE_S3_PREFIX = "bronze"
 SILVER_S3_PREFIX = "silver"
 GOLD_S3_PREFIX = "gold"
+
+# ==================================================
+# GLUE DATA CATALOG
+# ==================================================
+DATABASE_NAME = "trade_data_imat3a04"
+CRAWLER_NAME = "dot_history_crawler"
+TABLE_PREFIX = "dot_"
+ROLE_ARN = "arn:aws:iam::490004641586:role/Sprint2a04"
+
+# Nombres de tabla en el catálogo (TABLE_PREFIX + nombre de carpeta S3)
+BRONZE_TABLE = "dot_bronze"
+SILVER_TABLE = "dot_silver"
+GOLD_TABLE = "dot_gold"

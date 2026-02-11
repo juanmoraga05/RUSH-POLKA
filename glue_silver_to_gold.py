@@ -1,7 +1,8 @@
 """
 AWS Glue Job: Silver → Gold
-Lee los Parquet de la capa Silver, calcula indicadores técnicos
-(SMA 200, EMA 50, RSI, MACD) y almacena los resultados en la capa Gold.
+Lee los datos de la capa Silver desde el Data Catalog (Glue),
+calcula indicadores técnicos (SMA 200, EMA 50, RSI, MACD)
+y almacena los resultados en la capa Gold.
 
 Uso: subir este script a S3 y crear un Glue Job que lo ejecute.
 """
@@ -30,15 +31,20 @@ job.init(args["JOB_NAME"], args)
 # CONFIGURACIÓN
 # ==================================================
 BUCKET = "polkadot-rush-imat"
-SILVER_PATH = f"s3://{BUCKET}/silver/"
+DATABASE_NAME = "trade_data_imat3a04"
+SILVER_TABLE = "dot_silver"
 GOLD_PATH = f"s3://{BUCKET}/gold/"
 
 # ==================================================
-# 1. LECTURA — Parquet desde Silver
+# 1. LECTURA — Desde el Data Catalog (tabla Silver)
 # ==================================================
-print(f"[INFO] Leyendo Parquet desde {SILVER_PATH}")
+print(f"[INFO] Leyendo desde Data Catalog: {DATABASE_NAME}.{SILVER_TABLE}")
 
-df_silver = spark.read.parquet(SILVER_PATH)
+dyf_silver = glueContext.create_dynamic_frame.from_catalog(
+    database=DATABASE_NAME,
+    table_name=SILVER_TABLE,
+)
+df_silver = dyf_silver.toDF()
 
 print(f"[INFO] Registros leídos desde Silver: {df_silver.count()}")
 df_silver.printSchema()

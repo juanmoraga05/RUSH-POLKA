@@ -1,7 +1,7 @@
 """
 AWS Glue Job: Bronze → Silver
-Lee los CSV particionados de la capa Bronze, limpia y tipifica los datos,
-y los almacena en formato Parquet en la capa Silver.
+Lee los datos de la capa Bronze desde el Data Catalog (Glue),
+limpia y tipifica los datos, y los almacena en formato Parquet en Silver.
 
 Uso: subir este script a S3 y crear un Glue Job que lo ejecute.
 """
@@ -13,13 +13,6 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from pyspark.context import SparkContext
 from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    StructType,
-    StructField,
-    StringType,
-    DoubleType,
-    TimestampType,
-)
 
 # ==================================================
 # INICIALIZACIÓN GLUE
@@ -35,37 +28,23 @@ job.init(args["JOB_NAME"], args)
 # CONFIGURACIÓN
 # ==================================================
 BUCKET = "polkadot-rush-imat"
-BRONZE_PATH = f"s3://{BUCKET}/bronze/"
+DATABASE_NAME = "trade_data_imat3a04"
+BRONZE_TABLE = "dot_bronze"
 SILVER_PATH = f"s3://{BUCKET}/silver/"
 
 # ==================================================
-# 1. LECTURA — CSV desde Bronze (con particiones year/month)
+# 1. LECTURA — Desde el Data Catalog (tabla Bronze)
 # ==================================================
-print(f"[INFO] Leyendo CSVs desde {BRONZE_PATH}")
+print(f"[INFO] Leyendo desde Data Catalog: {DATABASE_NAME}.{BRONZE_TABLE}")
 
-schema = StructType(
-    [
-        StructField("datetime", StringType(), True),
-        StructField("open", DoubleType(), True),
-        StructField("high", DoubleType(), True),
-        StructField("low", DoubleType(), True),
-        StructField("close", DoubleType(), True),
-        StructField("volume", DoubleType(), True),
-        StructField("symbol", StringType(), True),
-        StructField("exchange", StringType(), True),
-        StructField("interval", StringType(), True),
-        StructField("source", StringType(), True),
-    ]
+dyf_bronze = glueContext.create_dynamic_frame.from_catalog(
+    database=DATABASE_NAME,
+    table_name=BRONZE_TABLE,
 )
-
-df_bronze = (
-    spark.read.option("header", "true")
-    .option("inferSchema", "false")
-    .schema(schema)
-    .csv(BRONZE_PATH)
-)
+df_bronze = dyf_bronze.toDF()
 
 print(f"[INFO] Registros leídos desde Bronze: {df_bronze.count()}")
+df_bronze.printSchema()
 
 # ==================================================
 # 2. TRANSFORMACIÓN — Limpieza y tipificación (Silver)

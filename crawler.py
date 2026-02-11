@@ -1,18 +1,24 @@
 import time
 import boto3
-from config import AWS_REGION, BUCKET_NAME, SYMBOL
+from config import (
+    AWS_REGION,
+    BUCKET_NAME,
+    SYMBOL,
+    DATABASE_NAME,
+    CRAWLER_NAME,
+    TABLE_PREFIX,
+    ROLE_ARN,
+    BRONZE_S3_PREFIX,
+    SILVER_S3_PREFIX,
+    GOLD_S3_PREFIX,
+)
 
-# ==================================================
-# CONFIGURACIÓN
-# ==================================================
-DATABASE_NAME = "trade_data_imat3a04"
-CRAWLER_NAME = "dot_history_crawler"  # Nombre con referencia a la cripto
-TABLE_PREFIX = "dot_"  # Prefijo para tablas → dot_year_xxxx, etc.
-ROLE_ARN = "arn:aws:iam::490004641586:role/Sprint2a04"
-
-# Los datos están en s3://polkadot-rush-imat/year=YYYY/month=MM/
-# (build_s3_prefix en utils.py NO incluye 'raw/' en la key)
-S3_TARGET_PATH = f"s3://{BUCKET_NAME}/"
+# Targets S3: una entrada por cada capa del Data Lake
+S3_TARGETS = [
+    {"Path": f"s3://{BUCKET_NAME}/{BRONZE_S3_PREFIX}/"},
+    {"Path": f"s3://{BUCKET_NAME}/{SILVER_S3_PREFIX}/"},
+    {"Path": f"s3://{BUCKET_NAME}/{GOLD_S3_PREFIX}/"},
+]
 
 # ==================================================
 # CLIENTE GLUE
@@ -62,9 +68,7 @@ def create_crawler():
         TablePrefix=TABLE_PREFIX,  # Tablas se llamarán dot_*
         Description=f"Crawler para indexar datos históricos de {SYMBOL} (Polkadot)",
         Targets={
-            "S3Targets": [
-                {"Path": S3_TARGET_PATH},
-            ]
+            "S3Targets": S3_TARGETS,
         },
         SchemaChangePolicy={
             "UpdateBehavior": "UPDATE_IN_DATABASE",
@@ -128,4 +132,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
