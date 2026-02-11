@@ -5,6 +5,7 @@ Despliega y ejecuta el Glue Job Bronze → Silver.
 3. Lo ejecuta y espera a que termine
 """
 
+import os
 import time
 import boto3
 from config import AWS_REGION, BUCKET_NAME
@@ -12,9 +13,10 @@ from config import AWS_REGION, BUCKET_NAME
 # ==================================================
 # CONFIGURACIÓN
 # ==================================================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROLE_ARN = "arn:aws:iam::490004641586:role/Sprint2a04"
 JOB_NAME = "dot_bronze_to_silver"
-SCRIPT_LOCAL = "glue_bronze_to_silver.py"
+SCRIPT_LOCAL = os.path.join(BASE_DIR, "glue_bronze_to_silver.py")
 SCRIPT_S3_KEY = "scripts/glue_bronze_to_silver.py"
 SCRIPT_S3_PATH = f"s3://{BUCKET_NAME}/{SCRIPT_S3_KEY}"
 
