@@ -32,6 +32,11 @@ def main():
     s3 = boto3.client("s3", region_name=AWS_REGION)
     ensure_bucket_exists(s3, BUCKET_NAME, AWS_REGION)
 
+    # Crear estructura de carpetas en S3 (bronze/, silver/, gold/)
+    for layer in ("bronze", "silver", "gold"):
+        s3.put_object(Bucket=BUCKET_NAME, Key=f"{layer}/", Body=b"")
+    print("[OK] Estructura Data Lake creada en S3 (bronze/, silver/, gold/)")
+
     tv = TradingViewData()  # Inicialización para evitar retrasos en el bucle
     polka_data = tv.get_hist(
         symbol=SYMBOL, exchange=EXCHANGE, interval=Interval.daily, n_bars=1460
