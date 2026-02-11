@@ -1,5 +1,12 @@
 from botocore.exceptions import ClientError
-from config import SYMBOL, EXCHANGE, INTERVAL, SOURCE, LOCAL_BASE_DIR
+from config import (
+    SYMBOL,
+    EXCHANGE,
+    INTERVAL,
+    SOURCE,
+    BRONZE_LOCAL_DIR,
+    BRONZE_S3_PREFIX,
+)
 import pandas as pd
 import os
 
@@ -41,8 +48,8 @@ def upload_file_to_s3(s3_client, bucket: str, local_path: str, s3_key: str) -> N
 # ==================================================
 # PATH UTILS
 # ==================================================
-def build_s3_prefix(year: int, month: int) -> str:
-    return f"year={year}/month={month:02d}/"
+def build_s3_prefix(year: int, month: int, layer: str = BRONZE_S3_PREFIX) -> str:
+    return f"{layer}/year={year}/month={month:02d}/"
 
 
 def build_filename(year: int, month: int) -> str:
@@ -75,14 +82,14 @@ def write_csv(df: pd.DataFrame, year: int, month: int) -> str:
     ]
     df = df[cols]
 
-    prefix = build_s3_prefix(year, month)
+    partition = f"year={year}/month={month:02d}"
     filename = build_filename(year, month)
 
-    local_dir = os.path.join(LOCAL_BASE_DIR, prefix)
+    local_dir = os.path.join(BRONZE_LOCAL_DIR, partition)
     os.makedirs(local_dir, exist_ok=True)
 
     local_path = os.path.join(local_dir, filename)
     df.to_csv(local_path, index=False, encoding="utf-8")
 
-    print(f"[OK] CSV creado: {local_path} ({len(df)} filas)")
+    print(f"[OK] CSV (Bronze) creado: {local_path} ({len(df)} filas)")
     return local_path

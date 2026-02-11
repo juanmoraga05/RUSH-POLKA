@@ -3,7 +3,17 @@ import pandas as pd
 import boto3
 from TradingviewData import TradingViewData, Interval
 
-from config import AWS_REGION, BUCKET_NAME, SYMBOL, EXCHANGE, START_YEAR, END_YEAR
+from config import (
+    AWS_REGION,
+    BUCKET_NAME,
+    SYMBOL,
+    EXCHANGE,
+    START_YEAR,
+    END_YEAR,
+    BRONZE_LOCAL_DIR,
+    SILVER_LOCAL_DIR,
+    GOLD_LOCAL_DIR,
+)
 from utils import ensure_bucket_exists, write_csv, build_s3_prefix, upload_file_to_s3
 
 
@@ -12,6 +22,12 @@ from utils import ensure_bucket_exists, write_csv, build_s3_prefix, upload_file_
 # ==================================================
 def main():
     print("[INFO] Usando credenciales AWS desde variables de entorno (PowerShell)")
+    print("[INFO] Arquitectura Data Lake: Bronze → Silver → Gold")
+
+    # Crear estructura de carpetas locales
+    for layer_dir in (BRONZE_LOCAL_DIR, SILVER_LOCAL_DIR, GOLD_LOCAL_DIR):
+        os.makedirs(layer_dir, exist_ok=True)
+    print("[OK] Directorios de capas creados (bronze, silver, gold)")
 
     s3 = boto3.client("s3", region_name=AWS_REGION)
     ensure_bucket_exists(s3, BUCKET_NAME, AWS_REGION)
@@ -50,7 +66,7 @@ def main():
 
             s3_key = build_s3_prefix(year, month) + os.path.basename(local_csv)
             upload_file_to_s3(s3, BUCKET_NAME, local_csv, s3_key)
-    print("\n[FIN] HU-2 completada correctamente.")
+    print("\n[FIN] Datos almacenados en capa Bronze correctamente.")
 
 
 if __name__ == "__main__":
