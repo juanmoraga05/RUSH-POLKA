@@ -90,7 +90,7 @@ df_silver = df_silver.withColumn(
 
 # Añadir columnas de partición (year/month) desde el datetime
 df_silver = df_silver.withColumn("year", F.year("datetime"))
-df_silver = df_silver.withColumn("month", F.month("datetime"))
+df_silver = df_silver.withColumn("month", F.date_format("datetime", "MM"))
 
 print(f"[INFO] Registros tras limpieza (Silver): {df_silver.count()}")
 df_silver.printSchema()
