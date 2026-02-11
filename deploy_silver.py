@@ -97,7 +97,7 @@ def run_job():
 # MAIN
 # ==================================================
 def main():
-    print(f"=== Deploy Glue Job: Bronze → Silver ===\n")
+    print("=== Deploy Glue Job: Bronze → Silver ===\n")
     upload_script()
     create_or_update_job()
     run_job()
