@@ -1,4 +1,4 @@
-# RUSH-POLKA
+# RUSH-POLKA (SPRINT-3)
 
 ![Python](https://img.shields.io/badge/Python-3.12.10-blue.svg)
 ![AWS S3](https://img.shields.io/badge/AWS-S3-orange.svg)
