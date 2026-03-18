@@ -17,7 +17,7 @@ USERNAME = os.getenv("KAFKA_USERNAME", "kafka_client")
 PASSWORD = os.getenv("KAFKA_PASSWORD", "88b8a35dca1a04da57dc5f3e")
 SECURITY_PROTOCOL = os.getenv("KAFKA_SECURITY_PROTOCOL", "SASL_PLAINTEXT")
 SASL_MECHANISM = os.getenv("KAFKA_SASL_MECHANISM", "PLAIN")
-TOPIC_NAME = os.getenv("KAFKA_TOPIC", "imat3a-DOT")
+TOPIC_NAME = os.getenv("KAFKA_TOPIC", "imat3aDOT")
 CREATE_TOPIC_IF_MISSING = os.getenv("KAFKA_CREATE_TOPIC", "true").lower() in {
     "1",
     "true",
@@ -26,7 +26,7 @@ CREATE_TOPIC_IF_MISSING = os.getenv("KAFKA_CREATE_TOPIC", "true").lower() in {
 }
 
 SYMBOL = os.getenv("BINANCE_SYMBOL", "DOTUSDT").upper()
-INTERVAL_RAW = os.getenv("BINANCE_INTERVAL", "5m").lower()
+INTERVAL_RAW = os.getenv("BINANCE_INTERVAL", "1m").lower()
 
 INTERVAL_MAP = {
     "1m": Client.KLINE_INTERVAL_1MINUTE,
