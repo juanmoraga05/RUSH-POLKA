@@ -17,7 +17,7 @@ USERNAME = os.getenv("KAFKA_USERNAME", "kafka_client")
 PASSWORD = os.getenv("KAFKA_PASSWORD", "88b8a35dca1a04da57dc5f3e")
 SECURITY_PROTOCOL = os.getenv("KAFKA_SECURITY_PROTOCOL", "SASL_PLAINTEXT")
 SASL_MECHANISM = os.getenv("KAFKA_SASL_MECHANISM", "PLAIN")
-TOPIC_NAME = os.getenv("KAFKA_TOPIC", "imat3aDOT")
+TOPIC_NAME = os.getenv("KAFKA_TOPIC", "imat3a-DOT")
 CREATE_TOPIC_IF_MISSING = os.getenv("KAFKA_CREATE_TOPIC", "true").lower() in {
     "1",
     "true",
