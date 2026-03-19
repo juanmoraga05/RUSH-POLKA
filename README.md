@@ -10,6 +10,10 @@
 
 **RUSH-POLKA** is an end-to-end Data Lake pipeline built for a Big Data Processing university course. It extracts historical financial data for **Polkadot (DOT)** from TradingView (Binance exchange), processes it through a three-layer architecture (**Bronze → Silver → Gold**) using **AWS Glue** and **Apache Spark**, and produces technical analysis indicators.
 
+## Sprint
+
+Current sprint version: **Sprint 5**.
+
 ## Architecture
 
 The pipeline follows a **medallion architecture** on AWS S3:
