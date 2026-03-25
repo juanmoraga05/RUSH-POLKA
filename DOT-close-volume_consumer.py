@@ -16,7 +16,7 @@ GROUP_ID = "imat3a_dot_console_group"
 # --- Configuración Timestream ---
 REGION = "eu-south-2"
 DATABASE = "imat3a_crypto_rt"
-QUOTES_TABLE = "btc_quotes_raw"
+QUOTES_TABLE = "dot_close"
 
 ts_client = boto3.client("timestream-write", region_name=REGION)
 
@@ -116,7 +116,7 @@ def main() -> None:
                 for record in consumer_records:
                     mostrar_close_volume(record.key, record.value)
                     procesar_y_guardar_close(record.key, record.value)
-                    
+
     except KeyboardInterrupt:
         print("\n[!] Deteniendo el consumidor...")
     finally:

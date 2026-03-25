@@ -16,7 +16,7 @@ GROUP_ID = "imat3a_vwap_console_group"
 # --- Configuración Timestream ---
 REGION = "eu-south-2"
 DATABASE = "imat3a_crypto_rt"
-VWAP_TABLE = "btc_vwap_5m"
+VWAP_TABLE = "dot_vwap"
 
 ts_client = boto3.client("timestream-write", region_name=REGION)
 
