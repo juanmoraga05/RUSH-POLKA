@@ -43,7 +43,7 @@ def upload_script():
 # 2. CREAR O ACTUALIZAR GLUE JOB
 # ==================================================
 def create_or_update_job():
-    job_config = dict(
+    job_config:dict = dict(
         Name=JOB_NAME,
         Role=ROLE_ARN,
         Command={
