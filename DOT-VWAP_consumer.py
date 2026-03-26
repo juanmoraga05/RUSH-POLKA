@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import time
 from datetime import datetime, timezone
 import boto3
 from kafka import KafkaConsumer
@@ -19,6 +18,8 @@ DATABASE = "imat3a_crypto_rt"
 VWAP_TABLE = "dot_vwap"
 
 ts_client = boto3.client("timestream-write", region_name=REGION)
+# Cache local para evitar reescribir exactamente el mismo valor de una ventana
+LAST_VWAP_BY_WINDOW = {}
 
 
 def mostrar_vwap(record_key: str, record_value: dict):
@@ -30,31 +31,57 @@ def mostrar_vwap(record_key: str, record_value: dict):
     except Exception as e:
         print(f"[ERROR] No se pudo mostrar el mensaje: {e} | value={record_value}")
 
-def now_epoch_ms() -> str:
-    return str(int(datetime.now(timezone.utc).timestamp() * 1000))
+
+def now_epoch_ms_int() -> int:
+    return int(datetime.now(timezone.utc).timestamp() * 1000)
+
+
+def iso_to_epoch_ms(value: str) -> str:
+    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return str(int(dt.timestamp() * 1000))
+
 
 def procesar_y_guardar_vwap(record_key: str, record_value: dict):
     try:
         symbol = (record_value.get("symbol") or record_key or "DOTUSDT").upper()
-        vwap_value = record_value.get("vwap")
-        
+        raw_vwap = record_value.get("vwap")
+        if raw_vwap is None:
+            print(f"[WARN] Mensaje sin 'vwap': {record_value}")
+            return
+        vwap_value = float(raw_vwap)
+
         # Extraer timestamps si vienen en el payload, si no, usar el actual
         window_start = record_value.get("window_start", "N/A")
         window_end = record_value.get("window_end", "N/A")
-        
+
+        window_key = (symbol, str(window_start), str(window_end))
+        if LAST_VWAP_BY_WINDOW.get(window_key) == vwap_value:
+            print(
+                f"[SKIP] {symbol} | ventana {window_start} -> {window_end} sin cambios (vwap={vwap_value})."
+            )
+            return
+
+        event_time_ms = (
+            iso_to_epoch_ms(str(window_end))
+            if window_end != "N/A"
+            else str(now_epoch_ms_int())
+        )
+
         vwap_record = {
             "Dimensions": [
                 {"Name": "symbol", "Value": symbol},
                 {"Name": "source_topic", "Value": TOPIC},
                 {"Name": "window_start", "Value": str(window_start)},
-                {"Name": "window_end", "Value": str(window_end)}
+                {"Name": "window_end", "Value": str(window_end)},
             ],
             "MeasureName": "vwap",
-            "MeasureValue": str(float(vwap_value)),
+            "MeasureValue": str(vwap_value),
             "MeasureValueType": "DOUBLE",
-            # Usamos el epoch actual ya que el payload simple a veces no trae el timestamp de evento exacto
-            "Time": now_epoch_ms(), 
-            "TimeUnit": "MILLISECONDS"
+            # Usamos window_end para que cada ventana reutilice el mismo punto temporal (upsert)
+            "Time": event_time_ms,
+            "TimeUnit": "MILLISECONDS",
+            # Version creciente permite actualizar el mismo registro en vez de duplicarlo
+            "Version": now_epoch_ms_int(),
         }
 
         ts_client.write_records(
@@ -62,10 +89,12 @@ def procesar_y_guardar_vwap(record_key: str, record_value: dict):
             TableName=VWAP_TABLE,
             Records=[vwap_record],
         )
+        LAST_VWAP_BY_WINDOW[window_key] = vwap_value
         print(f"[OK] {symbol} | vwap={vwap_value} guardado en {VWAP_TABLE}.")
 
     except Exception as e:
         print(f"[ERROR] No se pudo guardar el mensaje: {e} | value={record_value}")
+
 
 def main() -> None:
     consumer = KafkaConsumer(
