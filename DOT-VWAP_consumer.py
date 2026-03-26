@@ -14,7 +14,7 @@ TOPIC = "imat3a-DOT-VWAP"
 GROUP_ID = "imat3a_vwap_console_group"
 
 # --- Configuración Timestream ---
-REGION = "eu-south-2"
+REGION = "eu-west-1"
 DATABASE = "imat3a_crypto_rt"
 VWAP_TABLE = "dot_vwap"
 
