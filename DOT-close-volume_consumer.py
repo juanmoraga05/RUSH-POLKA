@@ -65,17 +65,6 @@ def procesar_y_guardar_close(record_key: str, record_value: dict) -> None:
     except Exception as e:
         print(f"[ERROR] No se pudo guardar el mensaje: {e} | value={record_value}")
 
-def parse_value(raw_value: bytes) -> dict:
-    text = raw_value.decode("utf-8").strip()
-
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        # Soporta líneas tipo: DOTUSDT {"symbol": ...}
-        brace_pos = text.find("{")
-        if brace_pos == -1:
-            raise
-        return json.loads(text[brace_pos:])
 
 
 def mostrar_close_volume(record_key: str, record_value: dict) -> None:
